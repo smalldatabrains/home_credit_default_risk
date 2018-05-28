@@ -6,6 +6,7 @@ import seaborn as sns
 import keras
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
+from sklearn import preprocessing
 
 
 def main():
@@ -21,17 +22,18 @@ def main():
 
 	print("ANALYSIS")
 	for file in files:
+		print(file)
 		df=csv_read(file)
 		df.name=file[:-4]
 	#creates a figure for each numerical variable
 		for variable in df.columns:
 			if(df[variable].dtype==np.float64 or df[variable].dtype==np.int64):
-				print(variable)
+				print(variable," is made of numerical values")
 				chart_numerical(df,variable,df.name)
 			
 
 			elif(df[variable].dtype==object):
-				print(variable," is a categorical value")
+				print(variable," is made of categorical values")
 				chart_categorical(df,variable,df.name)
 
 	#generate statistical values
@@ -107,6 +109,13 @@ def stats(df,name):
 	return stats
 
 
+#skewness of the target value
+def skewness(target_value):
+	table=target_value.value.counts()
+	print(table)
+	ratio=table[0]/(table[0]+table[1])
+	return ratio
+
 #feature selection for training
 #create csv_file with selected inputs and labels per loan (merging of informations)
 def features_selection(df):
@@ -115,6 +124,23 @@ def features_selection(df):
 
 def scatter_matrix(df):
 	pass
+
+#prepare data for model training
+def prepare_data(df):
+	for variable in df.columns:
+		if df[variable].dtype=='object':
+			df[variable],b=pd.factorize(df[variable])
+	inputs=df.iloc[:,2:df.shape[1]]
+	labels=df['TARGET']
+	return inputs,labels
+
+
+def normalize(inputs,labels):
+	X=preprocessing.normalize(inputs)
+	X_train,X_test,y_train,y_test=model_selection.train_test_split(X,labels,test_size=0.3)
+	return X_train,X_test,y_train,y_test
+
+
 
 def correlation(df,name):
 	correlation=df.corr()
