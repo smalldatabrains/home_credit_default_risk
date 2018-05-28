@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+import seaborn as sns
 import keras
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
-from statistics import mode
 
 
 def main():
@@ -32,36 +32,63 @@ def main():
 
 			elif(df[variable].dtype==object):
 				print(variable," is a categorical value")
+				chart_categorical(df,variable,df.name)
 
 	#generate statistical values
 		statistics=stats(df,df.name)
 
+	#generate correlation map
+		correlation(df,df.name)
+
+	#joining tables
+
+	#features selection
+
 	print("TRAINING THE MODEL")
+	#prepare data for training
+
+	#train different models and compare performance
 
 
 #csv reader and informations
 def csv_read(file):
 	data=pd.read_csv(file)
+	#before removing NaN
+	print("Before removing missing values",data.shape)
 	#print information about NaN and Null values
+	variable_status(data)
 	data.dropna() #removing NaN values for first analysis
+	print("After removing missing values",data.shape)
 	print(data.columns)
 	return data
 
 #check qty/ratio of NaN and Null values for a variable
-def variable_status(variable):
-	pass
+def variable_status(data):
+	count=data.isnull().sum()
+	total=data.shape[0]
+	ratio=count/total
+	return pd.DataFrame(data={'missing value':count,'ratio':ratio},index=data.columns.values)
 
 #data analysis on dtype=float64 and int64
 def chart_numerical(df,x,name):
 	fig=plt.figure()
-	df[x].hist()
+	df[x].hist(bins=50)
 	plt.title(x)
 	if not os.path.exists('../fig/'+name+'/'):
 		os.makedirs('../fig/'+name+'/')
 	fig.savefig('../fig/'+name+'/'+x+'.png')
+	plt.close(fig) #for memory management purpose
 
 def chart_categorical(df,x,name):
-	pass
+	fig=plt.figure()
+	counts=df[x].value_counts()
+	counts.plot(kind='pie')
+	plt.axis('equal')
+	plt.title(x)
+	if not os.path.exists('../fig/'+name+'/'):
+		os.makedirs('../fig/'+name+'/')
+	fig.savefig('../fig/'+name+'/'+x+'.png')
+	plt.close(fig) #for memory management purpose
 
 def stats(df,name):
 	stats=pd.DataFrame(columns=['variable','mean','median','std','range','skewness','kurtosis'])
@@ -82,12 +109,21 @@ def stats(df,name):
 
 #feature selection for training
 #create csv_file with selected inputs and labels per loan (merging of informations)
-def features_selection(dataframe):
+def features_selection(df):
 	pass
 
 
-def scatter_matrix(dataframe):
+def scatter_matrix(df):
 	pass
+
+def correlation(df,name):
+	correlation=df.corr()
+	fig=plt.figure()
+	sns.heatmap(correlation.values)
+	plt.show()
+	plt.title('correlation '+name)
+	fig.savefig('../correlation/'+name+'.png')
+	plt.close(fig)
 
 
 #logistics regression
@@ -98,7 +134,7 @@ def logistic_regression(inputs,labels,X_test,y_test):
 	print(accuracy)
 
 #random forest
-def random_forest(inputs,labels,X_test,y_test)
+def random_forest(inputs,labels,X_test,y_test):
 	classifier=RandomForestClassifier(n_estimators=10)
 	classifier.fit(inputs,labels)
 	accuracy=classifier.score(X_test,y_test)
